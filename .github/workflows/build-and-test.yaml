@@ -63,7 +63,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: |
           version=$(head "Cargo.toml" | grep version | head -n 1 | tr 'version = "' " " | xargs | awk '{print tolower($0)}')
-          project_name=$(head "Cargo.toml" | grep name | head -n 1 | tr 'name = "' " " | xargs | awk '{print tolower($0)}')
+          project_name=$(head "Cargo.toml" | grep name | head -n 1 | sed 's/"//g' | sed 's/name = //g' | xargs | awk '{print tolower($0)}')
           echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin
           docker build --tag "$DOCKER_USERNAME/$project_name:$version" .
           docker push "$DOCKER_USERNAME/$project_name:$version"
