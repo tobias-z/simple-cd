@@ -971,7 +971,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "simple_cd"
+name = "simple-cd"
 version = "0.1.0"
 dependencies = [
  "dotenv",
