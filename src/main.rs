@@ -23,7 +23,7 @@ struct DeployRequest<'r> {
     name: &'r str,
     downdir: Option<&'r str>,
     token: &'r str,
-    invalidate_images: Option<Vec<&'r str>>
+    invalidate_images: Option<Vec<&'r str>>,
 }
 
 #[post("/deploy", data = "<request>")]
@@ -68,7 +68,7 @@ fn deploy(request: Json<DeployRequest<'_>>) -> Result<String, Status> {
         .expect("unable to change environment variables");
 
     if let Some(images) = &request.invalidate_images {
-        let output = Command::new("docker")
+        Command::new("docker")
             .arg("image")
             .arg("rm")
             .args(images)
@@ -77,16 +77,8 @@ fn deploy(request: Json<DeployRequest<'_>>) -> Result<String, Status> {
             .unwrap_or_else(|_| panic!("unable to remove the images {:?}", images));
     }
 
-    run_in_files(Path::new(&config_dir), &run_container)
-        .expect("unable to start containers");
+    run_in_files(Path::new(&config_dir), &run_container).expect("unable to start containers");
 
-    // work with docker
-    // 1. stop any currently running compose in that directory prob with run_in_all_files (should be done before any of the above
-    // steps)
-    // 2. remove all images provided in the invalidate images list
-    // 3. run all docker composes in that directory prob with run_in_all_files
-
-    // remove the checked out repository
     std::fs::remove_dir_all(repo_root).expect("unable to remove the checked out repository");
 
     Ok(format!("Successfully started deployed project: {}", name))
