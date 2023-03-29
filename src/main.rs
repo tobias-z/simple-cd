@@ -75,9 +75,6 @@ fn deploy(request: Json<DeployRequest<'_>>) -> Result<String, Status> {
             .arg("--force")
             .output()
             .unwrap_or_else(|_| panic!("unable to remove the images {:?}", images));
-
-        println!("{}", String::from_utf8(output.stderr).unwrap());
-        println!("{}", String::from_utf8(output.stdout).unwrap());
     }
 
     run_in_files(Path::new(&config_dir), &run_container)
@@ -90,7 +87,7 @@ fn deploy(request: Json<DeployRequest<'_>>) -> Result<String, Status> {
     // 3. run all docker composes in that directory prob with run_in_all_files
 
     // remove the checked out repository
-    std::fs::remove_dir_all(&repo_root).expect("unable to remove the checked out repository");
+    std::fs::remove_dir_all(repo_root).expect("unable to remove the checked out repository");
 
     Ok(format!("Successfully started deployed project: {}", name))
 }
@@ -98,7 +95,6 @@ fn deploy(request: Json<DeployRequest<'_>>) -> Result<String, Status> {
 fn stop_running_app(file: &DirEntry) {
     if let Some(full_path) = file.path().to_str() {
         if full_path.ends_with("docker-compose.yaml") || full_path.ends_with("docker-compose.yml") {
-            println!("running compose file {}", full_path);
             Command::new("docker")
                 .arg("compose")
                 .arg("-f")
