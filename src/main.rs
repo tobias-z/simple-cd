@@ -23,6 +23,7 @@ struct DeployRequest<'r> {
     name: &'r str,
     downdir: Option<&'r str>,
     token: &'r str,
+    project_version: &'r str,
     invalidate_images: Option<Vec<&'r str>>,
 }
 
@@ -64,8 +65,23 @@ fn deploy(request: Json<DeployRequest<'_>>) -> Result<String, Status> {
         .unwrap();
     }
 
-    run_in_files(Path::new(&config_dir), &replace_env_with_values)
-        .expect("unable to change environment variables");
+    run_in_files(Path::new(&config_dir), &|file| {
+        if let Some(full_path) = file.path().to_str() {
+            if !full_path.ends_with(".template") {
+                return;
+            }
+            run_script!(format!(
+                "PROJECT_VERSION={} envsubst < {} > {}",
+                request.project_version,
+                full_path,
+                full_path.replace(".template", "")
+            ))
+            .unwrap_or_else(|_| panic!("unable to run command 'envsubst' on file {}", full_path));
+            std::fs::remove_file(full_path)
+                .unwrap_or_else(|_| panic!("unable to remove file {}", full_path))
+        }
+    })
+    .expect("unable to change environment variables");
 
     if let Some(images) = &request.invalidate_images {
         Command::new("docker")
@@ -110,22 +126,6 @@ fn run_container(file: &DirEntry) {
                 .output()
                 .unwrap_or_else(|_| panic!("Unable to start docker compose file {}", full_path));
         }
-    }
-}
-
-fn replace_env_with_values(file: &DirEntry) {
-    if let Some(full_path) = file.path().to_str() {
-        if !full_path.ends_with(".template") {
-            return;
-        }
-        run_script!(format!(
-            "envsubst < {} > {}",
-            full_path,
-            full_path.replace(".template", "")
-        ))
-        .unwrap_or_else(|_| panic!("unable to run command 'envsubst' on file {}", full_path));
-        std::fs::remove_file(full_path)
-            .unwrap_or_else(|_| panic!("unable to remove file {}", full_path))
     }
 }
 
