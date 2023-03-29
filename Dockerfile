@@ -2,7 +2,6 @@ FROM rust:1.68.0-slim as builder
 WORKDIR /build
 COPY . .
 RUN rustup default nightly
-# RUN apt update && apt install pkg-config libssl-dev -y
 RUN cargo install --path .
 
 FROM debian:11-slim
@@ -22,10 +21,10 @@ RUN echo \
 RUN apt-get update
 RUN apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-COPY --from=builder /usr/local/cargo/bin/simple-server-deployment /usr/local/bin/simple-server-deployment
-RUN mkdir -p /etc/simple-server-deployment/checkouts/ \
-    && mkdir -p /etc/simple-server-deployment/conf/
+COPY --from=builder /usr/local/cargo/bin/simple-cd /usr/local/bin/simple-cd
+RUN mkdir -p /etc/simple-cd/checkouts/ \
+    && mkdir -p /etc/simple-cd/conf/
 
 ENV ROCKET_ADDRESS=0.0.0.0
 
-CMD ["/usr/local/bin/simple-server-deployment"]
+CMD ["/usr/local/bin/simple-cd"]
