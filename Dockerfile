@@ -6,12 +6,13 @@ RUN cargo install --path .
 
 FROM debian:11-slim
 
-# Install git and docker
+# Install git, docker, and envsubst
 RUN apt-get update && apt-get install -y \
     git \
     ca-certificates \
     curl \
-    gnupg
+    gnupg \
+    gettext-base
 RUN mkdir -m 0755 -p /etc/apt/keyrings
 RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 RUN echo \

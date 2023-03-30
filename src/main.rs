@@ -1,5 +1,5 @@
 use dotenv::dotenv;
-use run_script::run_script;
+use run_script::{run_script, ScriptOptions};
 use std::{
     collections::hash_map::DefaultHasher,
     fs::DirEntry,
@@ -70,12 +70,19 @@ fn deploy(request: Json<DeployRequest<'_>>) -> Result<String, Status> {
             if !full_path.ends_with(".template") {
                 return;
             }
-            run_script!(format!(
-                "PROJECT_VERSION={} envsubst < {} > {}",
-                request.project_version,
-                full_path,
-                full_path.replace(".template", "")
-            ))
+            let options = ScriptOptions::new();
+            run_script!(
+                r#"
+                export PROJECT_VERSION=$1
+                envsubst < $2 > $3
+                "#,
+                &vec![
+                    request.project_version.to_string(),
+                    full_path.to_string(),
+                    full_path.replace(".template", "")
+                ],
+                &options
+            )
             .unwrap_or_else(|_| panic!("unable to run command 'envsubst' on file {}", full_path));
             std::fs::remove_file(full_path)
                 .unwrap_or_else(|_| panic!("unable to remove file {}", full_path))
